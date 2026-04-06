@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Semester Notes App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero">
+        <p class="label">DevOPs Demo Project</p>
+        <h1>Notes App</h1>
+        <p class="subtitle">A simple full-stack app with HTML frontend, Node.js backend, and SQLite database.</p>
+      </section>
+
+      <section class="card">
+        <form id="note-form" class="form">
+          <input id="title" type="text" placeholder="Enter a note" maxlength="100" />
+          <button type="submit">Add</button>
+        </form>
+
+        <p id="status" class="status"></p>
+        <ul id="notes" class="notes"></ul>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
