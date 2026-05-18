@@ -22,11 +22,46 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run tests
+      - name: Run Node.js tests
         run: npm test || true
 
+  selenium-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium requests
+
+      - name: Set up Chrome for Selenium
+        uses: browser-actions/setup-chrome@latest
+
+      - name: Install chromedriver
+        uses: nanasess/setup-chromedriver@master
+
+      - name: Start Docker Compose
+        run: docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: sleep 10
+
+      - name: Run Selenium tests
+        run: python -m pytest tests/test_selenium.py -v || python tests/test_selenium.py
+
+      - name: Stop Docker Compose
+        run: docker-compose down
+
   build-docker-images:
-    needs: build-and-test
+    needs: [build-and-test, selenium-tests]
     runs-on: ubuntu-latest
     
     steps:
@@ -49,7 +84,7 @@ jobs:
           file: ./Dockerfile.frontend
           push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:v1
+            ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:v2
             ${{ secrets.DOCKER_USERNAME }}/notes-app-frontend:latest
 
       - name: Build and push Backend image
@@ -61,3 +96,28 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/notes-app-backend:v1
             ${{ secrets.DOCKER_USERNAME }}/notes-app-backend:latest
+
+  deploy-to-aks:
+    needs: build-docker-images
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Configure kubectl
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+
+      - name: Deploy to AKS
+        run: kubectl apply -f k8s/3-tier-deployment.yaml
+
+      - name: Wait for pods to be ready
+        run: kubectl rollout status deployment/notes-frontend -n default --timeout=5m
+
+      - name: Show pod status
+        run: kubectl get pods -n default
