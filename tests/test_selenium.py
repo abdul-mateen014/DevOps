@@ -68,7 +68,15 @@ class NotesAppTests(unittest.TestCase):
     def test_05_delete_note(self):
         """Test 5: Delete a note"""
         self.driver.get(self.base_url)
-        self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".notes li")))
+        # Add a note first
+        note_text = f"Delete Test {int(time.time())}"
+        input_field = self.wait.until(EC.presence_of_element_located((By.ID, "title")))
+        input_field.clear()
+        input_field.send_keys(note_text)
+        add_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+        add_button.click()
+        time.sleep(2)
+        # Now delete it
         initial_notes = self.driver.find_elements(By.CSS_SELECTOR, ".notes li")
         if len(initial_notes) > 0:
             delete_button = initial_notes[0].find_element(By.CSS_SELECTOR, "button")
