@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+  frontend:
+    container_name: notes-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - notes-network
+    restart: unless-stopped
+
+  backend:
+    container_name: notes-backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_FILE=/app/data/notes.db
+    volumes:
+      - db_data:/app/data
+    networks:
+      - notes-network
+    restart: unless-stopped
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  notes-network:
+    driver: bridge
